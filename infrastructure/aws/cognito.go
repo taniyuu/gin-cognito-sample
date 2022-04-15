@@ -27,7 +27,6 @@ func NewCognitoProxy(poolID, clientID, clientSecret string) proxy.AuthenticatorP
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-	// panic("hoge")
 	return &cognitoIdpClient{
 		cognitoidentityprovider.New(sess),
 		&poolID, &clientID, &clientSecret,
@@ -35,16 +34,16 @@ func NewCognitoProxy(poolID, clientID, clientSecret string) proxy.AuthenticatorP
 }
 
 // Signup サインアップ
-func (cic *cognitoIdpClient) Signup(ctx context.Context, info *model.UserInfo) (string, error) {
+func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (string, error) {
 	mac := hmac.New(sha256.New, []byte(*cic.clientSecret))
-	mac.Write([]byte(info.Email + *cic.clientID))
+	mac.Write([]byte(req.Email + *cic.clientID))
 	secretHash := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 
 	newUserData := &cognitoidentityprovider.SignUpInput{
 		ClientId:       cic.clientID,
-		Password:       aws.String("Passw0rd!"),
+		Password:       aws.String(req.Password),
 		SecretHash:     aws.String(secretHash),
-		Username:       aws.String(info.Email),
+		Username:       aws.String(req.Email),
 		ClientMetadata: map[string]*string{"test": aws.String("日本語")},
 	}
 

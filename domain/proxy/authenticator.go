@@ -8,5 +8,5 @@ import (
 
 // AuthenticatorProxy 認証操作を抽象化します
 type AuthenticatorProxy interface {
-	Signup(ctx context.Context, info *model.UserInfo) (string, error)
+	Signup(ctx context.Context, req *model.CreateReq) (string, error)
 }
