@@ -5,7 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
+	"log"
 
 	"github.com/taniyuu/gin-cognito-sample/domain/model"
 	"github.com/taniyuu/gin-cognito-sample/domain/proxy"
@@ -35,6 +35,32 @@ func NewCognitoProxy(poolID, clientID, clientSecret string) proxy.AuthenticatorP
 
 // Signup サインアップ
 func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (string, error) {
+	// Cognitoはメールアドレス確認前でも2重にサインアップAPIを呼び出すとUsernameExistsExceptionになる
+	// resendでは根本解決にならないので、確認前のユーザがいれば削除する
+
+	getUser := &cognitoidentityprovider.AdminGetUserInput{
+		UserPoolId: cic.poolID,
+		Username:   aws.String(req.Email),
+	}
+	guo, _ := cic.idp.AdminGetUserWithContext(ctx, getUser)
+	if guo != nil {
+		// 存在した場合
+		confirmed := false // メール確認属性
+		for _, ua := range guo.UserAttributes {
+			if *ua.Name == "email_verified" && *ua.Value == "true" {
+				confirmed = true
+			}
+		}
+		if !confirmed {
+			// 削除 エラーは無視する
+			adui := &cognitoidentityprovider.AdminDeleteUserInput{
+				UserPoolId: cic.poolID,
+				Username:   aws.String(req.Email),
+			}
+			cic.idp.AdminDeleteUserWithContext(ctx, adui)
+		}
+	}
+
 	mac := hmac.New(sha256.New, []byte(*cic.clientSecret))
 	mac.Write([]byte(req.Email + *cic.clientID))
 	secretHash := base64.StdEncoding.EncodeToString(mac.Sum(nil))
@@ -47,10 +73,10 @@ func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (
 		ClientMetadata: map[string]*string{"test": aws.String("日本語")},
 	}
 
-	out, err := cic.idp.SignUp(newUserData)
+	suo, err := cic.idp.SignUpWithContext(ctx, newUserData)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
-	fmt.Println(out)
+	log.Default().Println(suo)
 	return "hoge", nil
 }
