@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"log"
 	"strings"
 
@@ -14,10 +15,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/pkg/errors"
 )
 
-// AWS S3に対する操作を提供します
+// Amazon Cognitoに対する操作を提供します
 type cognitoIdpClient struct {
 	idp                            *cognitoidentityprovider.CognitoIdentityProvider
 	poolID, clientID, clientSecret *string
@@ -122,7 +125,7 @@ func (cic *cognitoIdpClient) Signin(ctx context.Context, req *model.SigninReq) (
 	log.Default().Println(aiao)
 	// MFAなどの場合nilの可能性もあるので注意
 	return &model.Token{
-		AccessToken:  *aiao.AuthenticationResult.AccessToken,
+		IDToken:      *aiao.AuthenticationResult.IdToken,
 		RefreshToken: *aiao.AuthenticationResult.RefreshToken}, nil
 }
 
@@ -130,4 +133,39 @@ func (cic *cognitoIdpClient) calcSecretHash(username string) string {
 	mac := hmac.New(sha256.New, []byte(*cic.clientSecret))
 	mac.Write([]byte(username + *cic.clientID))
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
+}
+
+// NewCognitoAuthorizar AuthorizarProxyを生成する
+
+type cognitoAuthorizar struct {
+	jwk                      jwk.Set
+	region, poolID, clientID string
+}
+
+func NewCognitoAuthorizar(region, poolID, clientID string) proxy.AuthorizarProxy {
+	jwkURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", region, poolID)
+	jset, err := jwk.Fetch(context.Background(), jwkURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &cognitoAuthorizar{
+		jset, region, poolID, clientID,
+	}
+}
+
+func (ca *cognitoAuthorizar) ValidateJWT(accessToken string) error {
+	fmt.Println(ca.clientID)
+	jt, err := jwt.Parse(
+		[]byte(accessToken),
+		jwt.WithKeySet(ca.jwk),
+		jwt.WithValidate(true),
+		jwt.WithIssuer(fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", ca.region, ca.poolID)),
+		jwt.WithAudience(ca.clientID),
+		jwt.WithClaimValue("token_use", "id"),
+	)
+	log.Default().Printf("%+v", jt.PrivateClaims())
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }

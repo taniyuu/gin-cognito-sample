@@ -5,24 +5,24 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/taniyuu/gin-cognito-sample/application/usecase"
+	"github.com/taniyuu/gin-cognito-sample/domain/proxy"
 )
 
 // AuthzMiddleware アカウント認証操作を実行します
 type AuthzMiddleware struct {
-	au usecase.AuthnUsecase
+	ap proxy.AuthorizarProxy
 }
 
 // NewAuthzMiddleware AuthzMiddlewareを生成します
-func NewAuthzMiddleware(au usecase.AuthnUsecase) *AuthzMiddleware {
-	return &AuthzMiddleware{au}
+func NewAuthzMiddleware(ap proxy.AuthorizarProxy) *AuthzMiddleware {
+	return &AuthzMiddleware{ap}
 }
 
 // Authorization アカウントを認証しコンテキストに設定します
 func (am *AuthzMiddleware) Authorization() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := strings.Replace(c.GetHeader("Authorization"), "Bearer ", "", 1)
-		err := am.au.Authorization(c.Request.Context(), token)
+		err := am.ap.ValidateJWT(token)
 		if err != nil {
 			am.errorResponse(c, err)
 			c.Abort()
