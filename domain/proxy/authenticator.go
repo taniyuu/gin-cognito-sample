@@ -12,4 +12,5 @@ type AuthenticatorProxy interface {
 	ConfirmAndSignin(ctx context.Context, req *model.ConfirmAndSigninReq) (*model.Token, error)
 	Signin(ctx context.Context, req *model.SigninReq) (*model.Token, error)
 	Refresh(ctx context.Context, req *model.RefreshReq) (*model.Token, error)
+	ChangePassword(ctx context.Context, req *model.ChangePasswordReq) error
 }

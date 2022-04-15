@@ -126,6 +126,7 @@ func (cic *cognitoIdpClient) Signin(ctx context.Context, req *model.SigninReq) (
 	// MFAなどの場合nilの可能性もあるので注意
 	return &model.Token{
 		IDToken:      *aiao.AuthenticationResult.IdToken,
+		AccessToken:  *aiao.AuthenticationResult.AccessToken,
 		RefreshToken: aiao.AuthenticationResult.RefreshToken}, nil
 }
 
@@ -148,7 +149,22 @@ func (cic *cognitoIdpClient) Refresh(ctx context.Context, req *model.RefreshReq)
 	// MFAなどの場合nilの可能性もあるので注意
 	return &model.Token{
 		IDToken:      *aiao.AuthenticationResult.IdToken,
+		AccessToken:  *aiao.AuthenticationResult.AccessToken,
 		RefreshToken: aiao.AuthenticationResult.RefreshToken}, nil
+}
+
+// Refresh トークンリフレッシュ
+func (cic *cognitoIdpClient) ChangePassword(ctx context.Context, req *model.ChangePasswordReq) error {
+	cpi := &cognitoidentityprovider.ChangePasswordInput{
+		AccessToken:      aws.String(req.AccessToken),
+		PreviousPassword: aws.String(req.PreviousPassword),
+		ProposedPassword: aws.String(req.ProposedPassword),
+	}
+	_, err := cic.idp.ChangePasswordWithContext(ctx, cpi)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (cic *cognitoIdpClient) calcSecretHash(username string) string {
@@ -158,7 +174,6 @@ func (cic *cognitoIdpClient) calcSecretHash(username string) string {
 }
 
 // NewCognitoAuthorizar AuthorizarProxyを生成する
-
 type cognitoAuthorizar struct {
 	jwk                      jwk.Set
 	region, poolID, clientID string
@@ -176,7 +191,6 @@ func NewCognitoAuthorizar(region, poolID, clientID string) proxy.AuthorizarProxy
 }
 
 func (ca *cognitoAuthorizar) ValidateJWT(accessToken string) error {
-	fmt.Println(ca.clientID)
 	jt, err := jwt.Parse(
 		[]byte(accessToken),
 		jwt.WithKeySet(ca.jwk),
@@ -185,9 +199,9 @@ func (ca *cognitoAuthorizar) ValidateJWT(accessToken string) error {
 		jwt.WithAudience(ca.clientID),
 		jwt.WithClaimValue("token_use", "id"),
 	)
-	log.Default().Printf("%+v", jt.PrivateClaims())
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	log.Default().Printf("%+v", jt.PrivateClaims())
 	return nil
 }

@@ -45,6 +45,7 @@ func main() {
 				"message": "hello world",
 			})
 		})
+		authz.POST("/change-password", uh.ChangePassword)
 	}
 	engine.Run(":3000")
 }

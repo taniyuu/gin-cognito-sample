@@ -23,11 +23,18 @@ type SigninReq struct {
 }
 
 type RefreshReq struct {
-	Sub          string `json:"sub"`
-	RefreshToken string `json:"refresh_token"`
+	Sub          string `json:"sub" validate:"required"`
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+type ChangePasswordReq struct {
+	AccessToken      string `json:"access_token" validate:"required"`
+	PreviousPassword string `json:"previous_password" validate:"required"`
+	ProposedPassword string `json:"proposed_password" validate:"required"`
 }
 
 type Token struct {
 	IDToken      string  `json:"id_token"`
+	AccessToken  string  `json:"access_token"`
 	RefreshToken *string `json:"refresh_token,omitempty"`
 }

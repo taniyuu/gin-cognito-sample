@@ -14,10 +14,13 @@ type SigninReq struct {
 	model.SigninReq
 }
 
-type SigninResp struct {
-	model.Token
-}
-
 type RefreshReq struct {
 	model.RefreshReq
+}
+
+type ChangePasswordReq struct {
+	model.ChangePasswordReq
+}
+type SigninResp struct {
+	model.Token
 }
