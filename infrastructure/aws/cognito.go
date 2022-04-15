@@ -37,7 +37,6 @@ func NewCognitoProxy(poolID, clientID, clientSecret string) proxy.AuthenticatorP
 func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (string, error) {
 	// Cognitoはメールアドレス確認前でも2重にサインアップAPIを呼び出すとUsernameExistsExceptionになる
 	// resendでは根本解決にならないので、確認前のユーザがいれば削除する
-
 	getUser := &cognitoidentityprovider.AdminGetUserInput{
 		UserPoolId: cic.poolID,
 		Username:   aws.String(req.Email),
@@ -70,7 +69,7 @@ func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (
 		Password:       aws.String(req.Password),
 		SecretHash:     aws.String(secretHash),
 		Username:       aws.String(req.Email),
-		ClientMetadata: map[string]*string{"test": aws.String("日本語")},
+		ClientMetadata: map[string]*string{"custom-attr": aws.String("日本語も送れる")},
 	}
 
 	suo, err := cic.idp.SignUpWithContext(ctx, newUserData)
@@ -78,5 +77,6 @@ func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (
 		return "", errors.WithStack(err)
 	}
 	log.Default().Println(suo)
-	return "hoge", nil
+	log.Default().Println(base64.RawURLEncoding.EncodeToString([]byte(*suo.UserSub)))
+	return *suo.UserSub, nil
 }
