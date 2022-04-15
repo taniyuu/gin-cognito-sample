@@ -60,15 +60,11 @@ func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (
 		}
 	}
 
-	mac := hmac.New(sha256.New, []byte(*cic.clientSecret))
-	mac.Write([]byte(req.Email + *cic.clientID))
-	secretHash := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-
 	newUserData := &cognitoidentityprovider.SignUpInput{
 		ClientId:       cic.clientID,
-		Password:       aws.String(req.Password),
-		SecretHash:     aws.String(secretHash),
+		SecretHash:     aws.String(cic.calcSecretHash(req.Email)),
 		Username:       aws.String(req.Email),
+		Password:       aws.String(req.Password),
 		ClientMetadata: map[string]*string{"custom-attr": aws.String("日本語も送れる")},
 	}
 
@@ -77,6 +73,27 @@ func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (
 		return "", errors.WithStack(err)
 	}
 	log.Default().Println(suo)
-	log.Default().Println(base64.RawURLEncoding.EncodeToString([]byte(*suo.UserSub)))
 	return *suo.UserSub, nil
+}
+
+// Confirm サインアップ
+func (cic *cognitoIdpClient) Confirm(ctx context.Context, req *model.ConfirmReq) (string, error) {
+	csi := &cognitoidentityprovider.ConfirmSignUpInput{
+		ClientId:         cic.clientID,
+		SecretHash:       aws.String(cic.calcSecretHash(req.Email)),
+		Username:         aws.String(req.Email),
+		ConfirmationCode: aws.String(req.ConfirmationCode),
+	}
+	out, err := cic.idp.ConfirmSignUpWithContext(ctx, csi)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	log.Default().Println(out)
+	return "", nil
+}
+
+func (cic *cognitoIdpClient) calcSecretHash(username string) string {
+	mac := hmac.New(sha256.New, []byte(*cic.clientSecret))
+	mac.Write([]byte(username + *cic.clientID))
+	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }

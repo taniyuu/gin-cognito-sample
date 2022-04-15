@@ -32,5 +32,6 @@ func main() {
 		})
 	})
 	engine.POST("/signup", uh.Create)
+	engine.POST("/confirm-signup", uh.Confirm)
 	engine.Run(":3000")
 }

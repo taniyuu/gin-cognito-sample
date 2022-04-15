@@ -5,3 +5,7 @@ import "github.com/taniyuu/gin-cognito-sample/domain/model"
 type CreateReq struct {
 	model.CreateReq
 }
+
+type ConfirmReq struct {
+	model.ConfirmReq
+}
