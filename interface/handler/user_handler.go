@@ -49,11 +49,11 @@ func (h *UserHandler) Confirm(c *gin.Context) {
 		return
 	}
 
-	err := h.tu.Confirm(c.Request.Context(), req)
+	resp, err := h.tu.Confirm(c.Request.Context(), req)
 	if err != nil {
 		h.errorResponse(c, err)
 	} else {
-		c.Status(200)
+		c.JSON(200, resp)
 	}
 }
 

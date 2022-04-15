@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"log"
+	"strings"
 
 	"github.com/taniyuu/gin-cognito-sample/domain/model"
 	"github.com/taniyuu/gin-cognito-sample/domain/proxy"
@@ -76,20 +77,53 @@ func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (
 	return *suo.UserSub, nil
 }
 
-// Confirm サインアップ
-func (cic *cognitoIdpClient) Confirm(ctx context.Context, req *model.ConfirmReq) (string, error) {
+// ConfirmAndSigninReq 確認
+func (cic *cognitoIdpClient) ConfirmAndSignin(ctx context.Context, req *model.ConfirmAndSigninReq) (*model.Token, error) {
+	// 確認した後ログイン失敗の事象を回避するために一度ログインを試行する
+	_, err := cic.Signin(ctx, &model.SigninReq{Email: req.Email, Password: req.Password})
+	if err != nil && strings.HasPrefix(errors.Unwrap(err).Error(), "NotAuthorizedException") {
+		return nil, errors.WithStack(err)
+	}
+
 	csi := &cognitoidentityprovider.ConfirmSignUpInput{
 		ClientId:         cic.clientID,
 		SecretHash:       aws.String(cic.calcSecretHash(req.Email)),
 		Username:         aws.String(req.Email),
 		ConfirmationCode: aws.String(req.ConfirmationCode),
 	}
-	out, err := cic.idp.ConfirmSignUpWithContext(ctx, csi)
+	_, err = cic.idp.ConfirmSignUpWithContext(ctx, csi)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
-	log.Default().Println(out)
-	return "", nil
+
+	resp, err := cic.Signin(ctx, &model.SigninReq{Email: req.Email, Password: req.Password})
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return resp, nil
+}
+
+// Signin ログイン
+func (cic *cognitoIdpClient) Signin(ctx context.Context, req *model.SigninReq) (*model.Token, error) {
+	aiai := &cognitoidentityprovider.AdminInitiateAuthInput{
+		UserPoolId: cic.poolID,
+		ClientId:   cic.clientID,
+		AuthFlow:   aws.String(cognitoidentityprovider.AuthFlowTypeAdminUserPasswordAuth),
+		AuthParameters: map[string]*string{
+			"USERNAME":    aws.String(req.Email),
+			"PASSWORD":    aws.String(req.Password),
+			"SECRET_HASH": aws.String(cic.calcSecretHash(req.Email)),
+		},
+	}
+	aiao, err := cic.idp.AdminInitiateAuthWithContext(ctx, aiai)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	log.Default().Println(aiao)
+	// MFAなどの場合nilの可能性もあるので注意
+	return &model.Token{
+		AccessToken:  *aiao.AuthenticationResult.AccessToken,
+		RefreshToken: *aiao.AuthenticationResult.RefreshToken}, nil
 }
 
 func (cic *cognitoIdpClient) calcSecretHash(username string) string {

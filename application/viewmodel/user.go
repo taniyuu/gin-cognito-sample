@@ -7,5 +7,9 @@ type CreateReq struct {
 }
 
 type ConfirmReq struct {
-	model.ConfirmReq
+	model.ConfirmAndSigninReq
+}
+
+type SigninResp struct {
+	model.Token
 }

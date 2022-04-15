@@ -8,6 +8,6 @@ import (
 
 // AuthenticatorProxy 認証操作を抽象化します
 type AuthenticatorProxy interface {
-	Signup(ctx context.Context, req *model.CreateReq) (string, error)
-	Confirm(ctx context.Context, req *model.ConfirmReq) (string, error)
+	Signup(ctx context.Context, req *model.CreateReq) (uuid string, err error)
+	ConfirmAndSignin(ctx context.Context, req *model.ConfirmAndSigninReq) (*model.Token, error)
 }
