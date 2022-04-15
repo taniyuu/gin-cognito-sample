@@ -10,4 +10,5 @@ import (
 type AuthenticatorProxy interface {
 	Signup(ctx context.Context, req *model.CreateReq) (uuid string, err error)
 	ConfirmAndSignin(ctx context.Context, req *model.ConfirmAndSigninReq) (*model.Token, error)
+	Signin(ctx context.Context, req *model.SigninReq) (*model.Token, error)
 }

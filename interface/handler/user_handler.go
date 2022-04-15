@@ -57,6 +57,25 @@ func (h *UserHandler) Confirm(c *gin.Context) {
 	}
 }
 
+func (h *UserHandler) Signin(c *gin.Context) {
+	req := new(viewmodel.SigninReq)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+	if err := h.v.Struct(req); err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+
+	resp, err := h.tu.Signin(c.Request.Context(), req)
+	if err != nil {
+		h.errorResponse(c, err)
+	} else {
+		c.JSON(200, resp)
+	}
+}
+
 func (h *UserHandler) errorResponse(c *gin.Context, err error) {
 	log.Default().Printf("%+v", err)
 	// 適当なエラーレスポンス

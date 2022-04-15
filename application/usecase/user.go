@@ -11,6 +11,7 @@ import (
 type UserUsecase interface {
 	Create(ctx context.Context, req *viewmodel.CreateReq) error
 	Confirm(ctx context.Context, req *viewmodel.ConfirmReq) (*viewmodel.SigninResp, error)
+	Signin(ctx context.Context, req *viewmodel.SigninReq) (*viewmodel.SigninResp, error)
 }
 
 // アカウントに対する操作を提供します
@@ -35,6 +36,17 @@ func (tu *userUsecase) Create(ctx context.Context, req *viewmodel.CreateReq) err
 // Confirm アカウント確認を行います（ログインも試行する、MFAが設定された認証プールには適用できないので注意）
 func (tu *userUsecase) Confirm(ctx context.Context, req *viewmodel.ConfirmReq) (*viewmodel.SigninResp, error) {
 	token, err := tu.ap.ConfirmAndSignin(ctx, &req.ConfirmAndSigninReq)
+	if err != nil {
+		return nil, err
+	}
+	resp := new(viewmodel.SigninResp)
+	resp.Token = *token
+	return resp, nil
+}
+
+// Confirm アカウント確認を行います（ログインも試行する、MFAが設定された認証プールには適用できないので注意）
+func (tu *userUsecase) Signin(ctx context.Context, req *viewmodel.SigninReq) (*viewmodel.SigninResp, error) {
+	token, err := tu.ap.Signin(ctx, &req.SigninReq)
 	if err != nil {
 		return nil, err
 	}

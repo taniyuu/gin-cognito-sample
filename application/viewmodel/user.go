@@ -10,6 +10,10 @@ type ConfirmReq struct {
 	model.ConfirmAndSigninReq
 }
 
+type SigninReq struct {
+	model.SigninReq
+}
+
 type SigninResp struct {
 	model.Token
 }
