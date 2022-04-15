@@ -22,7 +22,12 @@ type SigninReq struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type Token struct {
-	IDToken      string `json:"id_token"`
+type RefreshReq struct {
+	Sub          string `json:"sub"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type Token struct {
+	IDToken      string  `json:"id_token"`
+	RefreshToken *string `json:"refresh_token,omitempty"`
 }

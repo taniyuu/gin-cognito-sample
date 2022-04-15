@@ -17,3 +17,7 @@ type SigninReq struct {
 type SigninResp struct {
 	model.Token
 }
+
+type RefreshReq struct {
+	model.RefreshReq
+}

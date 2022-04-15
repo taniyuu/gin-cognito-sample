@@ -126,7 +126,29 @@ func (cic *cognitoIdpClient) Signin(ctx context.Context, req *model.SigninReq) (
 	// MFAなどの場合nilの可能性もあるので注意
 	return &model.Token{
 		IDToken:      *aiao.AuthenticationResult.IdToken,
-		RefreshToken: *aiao.AuthenticationResult.RefreshToken}, nil
+		RefreshToken: aiao.AuthenticationResult.RefreshToken}, nil
+}
+
+// Refresh トークンリフレッシュ
+func (cic *cognitoIdpClient) Refresh(ctx context.Context, req *model.RefreshReq) (*model.Token, error) {
+	aiai := &cognitoidentityprovider.AdminInitiateAuthInput{
+		UserPoolId: cic.poolID,
+		ClientId:   cic.clientID,
+		AuthFlow:   aws.String(cognitoidentityprovider.AuthFlowTypeRefreshTokenAuth),
+		AuthParameters: map[string]*string{
+			"REFRESH_TOKEN": aws.String(req.RefreshToken),
+			"SECRET_HASH":   aws.String(cic.calcSecretHash(req.Sub)),
+		},
+	}
+	aiao, err := cic.idp.AdminInitiateAuthWithContext(ctx, aiai)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	log.Default().Println(aiao)
+	// MFAなどの場合nilの可能性もあるので注意
+	return &model.Token{
+		IDToken:      *aiao.AuthenticationResult.IdToken,
+		RefreshToken: aiao.AuthenticationResult.RefreshToken}, nil
 }
 
 func (cic *cognitoIdpClient) calcSecretHash(username string) string {

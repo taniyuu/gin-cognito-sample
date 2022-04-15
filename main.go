@@ -27,7 +27,7 @@ func main() {
 	uh, am := handler.NewUserHandler(uu), middleware.NewAuthzMiddleware(ap)
 
 	engine := gin.Default()
-	// no authenticate endpoint
+	// 認可なしエンドポイント
 	engine.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "hello world",
@@ -36,6 +36,8 @@ func main() {
 	engine.POST("/signup", uh.Create)
 	engine.POST("/confirm-signup", uh.Confirm)
 	engine.POST("/signin", uh.Signin)
+	engine.POST("/refresh-token", uh.Refresh)
+	// 認可エンドポイント
 	authz := engine.Group("/", am.Authorization())
 	{
 		authz.GET("/check", func(c *gin.Context) {
