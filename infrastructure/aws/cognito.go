@@ -65,10 +65,13 @@ func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (
 	}
 
 	newUserData := &cognitoidentityprovider.SignUpInput{
-		ClientId:       cic.clientID,
-		SecretHash:     aws.String(cic.calcSecretHash(req.Email)),
-		Username:       aws.String(req.Email),
-		Password:       aws.String(req.Password),
+		ClientId:   cic.clientID,
+		SecretHash: aws.String(cic.calcSecretHash(req.Email)),
+		Username:   aws.String(req.Email),
+		Password:   aws.String(req.Password),
+		UserAttributes: []*cognitoidentityprovider.AttributeType{
+			{Name: aws.String("name"), Value: aws.String(req.Name)},
+		},
 		ClientMetadata: map[string]*string{"custom-attr": aws.String("日本語も送れる")},
 	}
 
