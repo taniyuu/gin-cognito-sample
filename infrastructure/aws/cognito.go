@@ -156,7 +156,7 @@ func (cic *cognitoIdpClient) Refresh(ctx context.Context, req *model.RefreshReq)
 		RefreshToken: aiao.AuthenticationResult.RefreshToken}, nil
 }
 
-// Refresh トークンリフレッシュ
+// ChangePassword パスワード変更
 func (cic *cognitoIdpClient) ChangePassword(ctx context.Context, req *model.ChangePasswordReq) error {
 	cpi := &cognitoidentityprovider.ChangePasswordInput{
 		AccessToken:      aws.String(req.AccessToken),
@@ -168,6 +168,49 @@ func (cic *cognitoIdpClient) ChangePassword(ctx context.Context, req *model.Chan
 		return errors.WithStack(err)
 	}
 	return nil
+}
+
+// ForgotPassword パスワード変更
+func (cic *cognitoIdpClient) ForgotPassword(ctx context.Context, req *model.ForgotPasswordReq) error {
+	fpi := &cognitoidentityprovider.ForgotPasswordInput{
+		ClientId:   cic.clientID,
+		SecretHash: aws.String(cic.calcSecretHash(req.Email)),
+		Username:   aws.String(req.Email),
+	}
+	_, err := cic.idp.ForgotPasswordWithContext(ctx, fpi)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+// GetProfile 属性取得
+func (cic *cognitoIdpClient) GetProfile(ctx context.Context, req *model.GetProfileReq) (*model.User, error) {
+	lui := &cognitoidentityprovider.ListUsersInput{
+		UserPoolId: cic.poolID,
+		Filter:     aws.String(fmt.Sprintf(`sub = "%s"`, req.Sub)),
+	}
+	luo, err := cic.idp.ListUsersWithContext(ctx, lui)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	log.Default().Println(luo)
+	if len(luo.Users) == 0 {
+		return nil, errors.WithStack(fmt.Errorf("user not found"))
+	}
+	attrs := luo.Users[0].Attributes
+	u := new(model.User)
+	for _, attr := range attrs {
+		log.Default().Println(attr)
+		if *attr.Name == "email" {
+			u.Email = *attr.Value
+		}
+		if *attr.Name == "name" {
+			u.Name = *attr.Value
+		}
+	}
+	log.Default().Println(u)
+	return u, nil
 }
 
 func (cic *cognitoIdpClient) calcSecretHash(username string) string {
@@ -193,7 +236,7 @@ func NewCognitoAuthorizar(region, poolID, clientID string) proxy.AuthorizarProxy
 	}
 }
 
-func (ca *cognitoAuthorizar) ValidateJWT(accessToken string) error {
+func (ca *cognitoAuthorizar) ValidateJWT(accessToken string) (string, error) {
 	jt, err := jwt.Parse(
 		[]byte(accessToken),
 		jwt.WithKeySet(ca.jwk),
@@ -203,8 +246,8 @@ func (ca *cognitoAuthorizar) ValidateJWT(accessToken string) error {
 		jwt.WithClaimValue("token_use", "id"),
 	)
 	if err != nil {
-		return errors.WithStack(err)
+		return "", errors.WithStack(err)
 	}
 	log.Default().Printf("%+v", jt.PrivateClaims())
-	return nil
+	return jt.Subject(), nil
 }

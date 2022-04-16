@@ -21,6 +21,14 @@ type RefreshReq struct {
 type ChangePasswordReq struct {
 	model.ChangePasswordReq
 }
+
+type GetProfileReq struct {
+	model.GetProfileReq
+}
 type SigninResp struct {
 	model.Token
+}
+
+type User struct {
+	model.User
 }

@@ -1,10 +1,9 @@
 package model
 
-// type UserInfo struct {
-// 	Email string
-// 	Name  string
-// 	Id    string
-// }
+type User struct {
+	Email string
+	Name  string
+}
 
 type CreateReq struct {
 	Email    string `json:"email" validate:"required,email"`
@@ -32,6 +31,14 @@ type ChangePasswordReq struct {
 	AccessToken      string `json:"access_token" validate:"required"`
 	PreviousPassword string `json:"previous_password" validate:"required"`
 	ProposedPassword string `json:"proposed_password" validate:"required"`
+}
+
+type ForgotPasswordReq struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+type GetProfileReq struct {
+	Sub string `json:"sub" validate:"required"`
 }
 
 type Token struct {
