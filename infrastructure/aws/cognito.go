@@ -198,10 +198,18 @@ func (cic *cognitoIdpClient) GetProfile(ctx context.Context, req *model.GetProfi
 	if len(luo.Users) == 0 {
 		return nil, errors.WithStack(fmt.Errorf("user not found"))
 	}
-	attrs := luo.Users[0].Attributes
+	return cic.convertToUserModel(luo.Users[0].Attributes), nil
+}
+
+func (cic *cognitoIdpClient) calcSecretHash(username string) string {
+	mac := hmac.New(sha256.New, []byte(*cic.clientSecret))
+	mac.Write([]byte(username + *cic.clientID))
+	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
+}
+
+func (cic *cognitoIdpClient) convertToUserModel(attrs []*cognitoidentityprovider.AttributeType) *model.User {
 	u := new(model.User)
 	for _, attr := range attrs {
-		log.Default().Println(attr)
 		if *attr.Name == "email" {
 			u.Email = *attr.Value
 		}
@@ -209,14 +217,7 @@ func (cic *cognitoIdpClient) GetProfile(ctx context.Context, req *model.GetProfi
 			u.Name = *attr.Value
 		}
 	}
-	log.Default().Println(u)
-	return u, nil
-}
-
-func (cic *cognitoIdpClient) calcSecretHash(username string) string {
-	mac := hmac.New(sha256.New, []byte(*cic.clientSecret))
-	mac.Write([]byte(username + *cic.clientID))
-	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
+	return u
 }
 
 // NewCognitoAuthorizar AuthorizarProxyを生成する
