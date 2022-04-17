@@ -37,6 +37,12 @@ type ForgotPasswordReq struct {
 	Email string `json:"email" validate:"required,email"`
 }
 
+type ConfirmForgotPasswordReq struct {
+	Email    string `json:"email" validate:"required,email"`
+	Code     string `json:"code" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
 type GetProfileReq struct {
 	AccessToken string `json:"access_token" validate:"required"`
 }

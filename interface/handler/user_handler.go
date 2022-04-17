@@ -133,6 +133,25 @@ func (h *UserHandler) ForgotPassword(c *gin.Context) {
 	}
 }
 
+func (h *UserHandler) ConfirmForgotPassword(c *gin.Context) {
+	req := new(viewmodel.ConfirmForgotPasswordReq)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+	if err := h.v.Struct(req); err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+
+	err := h.tu.ConfirmForgotPassword(c.Request.Context(), req)
+	if err != nil {
+		h.errorResponse(c, err)
+	} else {
+		c.Status(200)
+	}
+}
+
 func (h *UserHandler) GetProfile(c *gin.Context) {
 	// sub, err := middleware.GetSub(c)
 	// if err != nil {

@@ -38,6 +38,7 @@ func main() {
 	engine.POST("/signin", uh.Signin)
 	engine.POST("/refresh-token", uh.Refresh)
 	engine.POST("/forgot-password", uh.ForgotPassword)
+	engine.POST("/confirm-forgot-password", uh.ConfirmForgotPassword)
 	engine.POST("/signout", uh.Signout)
 	// 認可エンドポイント
 	authz := engine.Group("/", am.Authorization())

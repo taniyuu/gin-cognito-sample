@@ -184,6 +184,22 @@ func (cic *cognitoIdpClient) ForgotPassword(ctx context.Context, req *model.Forg
 	return nil
 }
 
+// ConfirmForgotPassword パスワード変更確認
+func (cic *cognitoIdpClient) ConfirmForgotPassword(ctx context.Context, req *model.ConfirmForgotPasswordReq) error {
+	cfpi := &cognitoidentityprovider.ConfirmForgotPasswordInput{
+		ClientId:         cic.clientID,
+		SecretHash:       aws.String(cic.calcSecretHash(req.Email)),
+		Username:         aws.String(req.Email),
+		ConfirmationCode: aws.String(req.Code),
+		Password:         aws.String(req.Password),
+	}
+	_, err := cic.idp.ConfirmForgotPasswordWithContext(ctx, cfpi)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
 // GetProfile 属性取得
 func (cic *cognitoIdpClient) GetProfile(ctx context.Context, req *model.GetProfileReq) (*model.User, error) {
 	gui := &cognitoidentityprovider.GetUserInput{
