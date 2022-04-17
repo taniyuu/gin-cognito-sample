@@ -14,6 +14,7 @@ type UserUsecase interface {
 	Signin(ctx context.Context, req *viewmodel.SigninReq) (*viewmodel.SigninResp, error)
 	Refresh(ctx context.Context, req *viewmodel.RefreshReq) (*viewmodel.SigninResp, error)
 	ChangePassword(ctx context.Context, req *viewmodel.ChangePasswordReq) error
+	ForgotPassword(ctx context.Context, req *viewmodel.ForgotPasswordReq) error
 	GetProfile(ctx context.Context, req *viewmodel.GetProfileReq) (*viewmodel.User, error)
 	Signout(ctx context.Context, req *viewmodel.SignoutReq) error
 }
@@ -73,6 +74,11 @@ func (tu *userUsecase) Refresh(ctx context.Context, req *viewmodel.RefreshReq) (
 // ChangePassword パスワード変更を行います
 func (tu *userUsecase) ChangePassword(ctx context.Context, req *viewmodel.ChangePasswordReq) error {
 	return tu.ap.ChangePassword(ctx, &req.ChangePasswordReq)
+}
+
+// ForgotPassword パスワード忘れ
+func (tu *userUsecase) ForgotPassword(ctx context.Context, req *viewmodel.ForgotPasswordReq) error {
+	return tu.ap.ForgotPassword(ctx, &req.ForgotPasswordReq)
 }
 
 // GetProfile アカウント情報を取得します

@@ -22,6 +22,10 @@ type ChangePasswordReq struct {
 	model.ChangePasswordReq
 }
 
+type ForgotPasswordReq struct {
+	model.ForgotPasswordReq
+}
+
 type GetProfileReq struct {
 	model.GetProfileReq
 }
