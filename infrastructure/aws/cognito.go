@@ -201,6 +201,22 @@ func (cic *cognitoIdpClient) GetProfile(ctx context.Context, req *model.GetProfi
 	return cic.convertToUserModel(luo.Users[0].Attributes), nil
 }
 
+// ChangeProfile 属性変更
+func (cic *cognitoIdpClient) ChangeProfile(ctx context.Context, req *model.ChangeProfileReq) error {
+	uuai := &cognitoidentityprovider.UpdateUserAttributesInput{
+		AccessToken: aws.String(req.AccessToken),
+		UserAttributes: []*cognitoidentityprovider.AttributeType{
+			{Name: aws.String("name"), Value: aws.String(req.Name)},
+		},
+	}
+	uuao, err := cic.idp.UpdateUserAttributesWithContext(ctx, uuai)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	log.Default().Println(uuao)
+	return nil
+}
+
 func (cic *cognitoIdpClient) calcSecretHash(username string) string {
 	mac := hmac.New(sha256.New, []byte(*cic.clientSecret))
 	mac.Write([]byte(username + *cic.clientID))

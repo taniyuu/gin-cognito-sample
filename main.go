@@ -46,6 +46,7 @@ func main() {
 			})
 		})
 		authz.GET("/profile", uh.GetProfile)
+		authz.POST("/profile", uh.ChangeProfile)
 		authz.POST("/change-password", uh.ChangePassword)
 	}
 	engine.Run(":3000")

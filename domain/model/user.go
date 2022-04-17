@@ -41,6 +41,11 @@ type GetProfileReq struct {
 	Sub string `json:"sub" validate:"required"`
 }
 
+type ChangeProfileReq struct {
+	AccessToken string `json:"access_token" validate:"required"`
+	Name        string `json:"name" validate:"required"`
+}
+
 type Token struct {
 	IDToken      string  `json:"id_token"`
 	AccessToken  string  `json:"access_token"`

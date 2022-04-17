@@ -25,6 +25,10 @@ type ChangePasswordReq struct {
 type GetProfileReq struct {
 	model.GetProfileReq
 }
+
+type ChangeProfileReq struct {
+	model.ChangeProfileReq
+}
 type SigninResp struct {
 	model.Token
 }
