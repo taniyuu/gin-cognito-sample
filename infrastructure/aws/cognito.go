@@ -217,6 +217,21 @@ func (cic *cognitoIdpClient) ChangeProfile(ctx context.Context, req *model.Chang
 	return nil
 }
 
+// Signout ログアウト
+func (cic *cognitoIdpClient) Signout(ctx context.Context, req *model.SignoutReq) error {
+	rti := &cognitoidentityprovider.RevokeTokenInput{
+		ClientId:     cic.clientID,
+		ClientSecret: cic.clientSecret,
+		Token:        aws.String(req.RefreshToken),
+	}
+	rto, err := cic.idp.RevokeTokenWithContext(ctx, rti)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	log.Default().Println(rto)
+	return nil
+}
+
 func (cic *cognitoIdpClient) calcSecretHash(username string) string {
 	mac := hmac.New(sha256.New, []byte(*cic.clientSecret))
 	mac.Write([]byte(username + *cic.clientID))

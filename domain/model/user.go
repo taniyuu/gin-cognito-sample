@@ -46,6 +46,10 @@ type ChangeProfileReq struct {
 	Name        string `json:"name" validate:"required"`
 }
 
+type SignoutReq struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
 type Token struct {
 	IDToken      string  `json:"id_token"`
 	AccessToken  string  `json:"access_token"`

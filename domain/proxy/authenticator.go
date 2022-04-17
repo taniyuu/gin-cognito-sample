@@ -15,4 +15,5 @@ type AuthenticatorProxy interface {
 	ChangePassword(ctx context.Context, req *model.ChangePasswordReq) error
 	ForgotPassword(ctx context.Context, req *model.ForgotPasswordReq) error
 	GetProfile(ctx context.Context, req *model.GetProfileReq) (*model.User, error)
+	Signout(ctx context.Context, req *model.SignoutReq) error
 }

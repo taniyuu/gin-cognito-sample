@@ -29,6 +29,11 @@ type GetProfileReq struct {
 type ChangeProfileReq struct {
 	model.ChangeProfileReq
 }
+
+type SignoutReq struct {
+	model.SignoutReq
+}
+
 type SigninResp struct {
 	model.Token
 }

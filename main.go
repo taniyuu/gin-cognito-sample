@@ -37,6 +37,7 @@ func main() {
 	engine.POST("/confirm-signup", uh.Confirm)
 	engine.POST("/signin", uh.Signin)
 	engine.POST("/refresh-token", uh.Refresh)
+	engine.POST("/signout", uh.Signout)
 	// 認可エンドポイント
 	authz := engine.Group("/", am.Authorization())
 	{
@@ -46,7 +47,7 @@ func main() {
 			})
 		})
 		authz.GET("/profile", uh.GetProfile)
-		authz.POST("/profile", uh.ChangeProfile)
+		authz.PUT("/profile", uh.ChangeProfile)
 		authz.POST("/change-password", uh.ChangePassword)
 	}
 	engine.Run(":3000")
