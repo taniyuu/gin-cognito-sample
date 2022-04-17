@@ -7,7 +7,6 @@ import (
 
 	"github.com/taniyuu/gin-cognito-sample/application/usecase"
 	"github.com/taniyuu/gin-cognito-sample/application/viewmodel"
-	"github.com/taniyuu/gin-cognito-sample/interface/middleware"
 	"gopkg.in/go-playground/validator.v9"
 )
 
@@ -116,14 +115,21 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 }
 
 func (h *UserHandler) GetProfile(c *gin.Context) {
-	sub, err := middleware.GetSub(c)
-	if err != nil {
+	// sub, err := middleware.GetSub(c)
+	// if err != nil {
+	// 	h.errorResponse(c, err)
+	// 	return
+	// }
+	req := new(viewmodel.GetProfileReq)
+	if err := c.ShouldBindJSON(req); err != nil {
 		h.errorResponse(c, err)
 		return
 	}
-	vm := new(viewmodel.GetProfileReq)
-	vm.Sub = sub
-	resp, err := h.tu.GetProfile(c.Request.Context(), vm)
+	if err := h.v.Struct(req); err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+	resp, err := h.tu.GetProfile(c.Request.Context(), req)
 	if err != nil {
 		h.errorResponse(c, err)
 	} else {

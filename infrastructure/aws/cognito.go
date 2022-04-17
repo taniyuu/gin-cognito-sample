@@ -186,19 +186,15 @@ func (cic *cognitoIdpClient) ForgotPassword(ctx context.Context, req *model.Forg
 
 // GetProfile 属性取得
 func (cic *cognitoIdpClient) GetProfile(ctx context.Context, req *model.GetProfileReq) (*model.User, error) {
-	lui := &cognitoidentityprovider.ListUsersInput{
-		UserPoolId: cic.poolID,
-		Filter:     aws.String(fmt.Sprintf(`sub = "%s"`, req.Sub)),
+	gui := &cognitoidentityprovider.GetUserInput{
+		AccessToken: &req.AccessToken,
 	}
-	luo, err := cic.idp.ListUsersWithContext(ctx, lui)
+	guo, err := cic.idp.GetUserWithContext(ctx, gui)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	log.Default().Println(luo)
-	if len(luo.Users) == 0 {
-		return nil, errors.WithStack(fmt.Errorf("user not found"))
-	}
-	return cic.convertToUserModel(luo.Users[0].Attributes), nil
+	log.Default().Println(guo)
+	return cic.convertToUserModel(guo.UserAttributes), nil
 }
 
 // ChangeProfile 属性変更

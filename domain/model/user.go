@@ -38,7 +38,7 @@ type ForgotPasswordReq struct {
 }
 
 type GetProfileReq struct {
-	Sub string `json:"sub" validate:"required"`
+	AccessToken string `json:"access_token" validate:"required"`
 }
 
 type ChangeProfileReq struct {
