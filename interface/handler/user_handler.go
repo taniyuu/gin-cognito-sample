@@ -246,6 +246,21 @@ func (h *UserHandler) RespondToInvitation(c *gin.Context) {
 	}
 }
 
+func (h *UserHandler) GetUser(c *gin.Context) {
+	req := new(viewmodel.GetUserReq)
+	req.Sub = c.Param("id")
+	if err := h.v.Struct(req); err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+	resp, err := h.tu.GetUserForAdmin(c.Request.Context(), req)
+	if err != nil {
+		h.errorResponse(c, err)
+	} else {
+		c.JSON(200, resp)
+	}
+}
+
 func (h *UserHandler) errorResponse(c *gin.Context, err error) {
 	log.Default().Printf("%+v", err)
 	// 適当なエラーレスポンス

@@ -6,8 +6,8 @@ import (
 	"github.com/taniyuu/gin-cognito-sample/domain/model"
 )
 
-// AuthenticatorProxy 認証操作を抽象化します
-type AuthenticatorProxy interface {
+// UserProxy 認証、ユーザに関する操作を抽象化します
+type UserProxy interface {
 	Signup(ctx context.Context, req *model.CreateReq) (uuid string, err error)
 	ConfirmAndSignin(ctx context.Context, req *model.ConfirmAndSigninReq) (*model.Token, error)
 	Signin(ctx context.Context, req *model.SigninReq) (*model.Token, error)
@@ -19,4 +19,5 @@ type AuthenticatorProxy interface {
 	Signout(ctx context.Context, req *model.SignoutReq) error
 	Invite(ctx context.Context, req *model.InviteReq) (sub string, err error)
 	RespondToInvitation(ctx context.Context, req *model.RespondToInvitationReq) (*model.Token, error)
+	GetUser(ctx context.Context, req *model.GetUserReq) (*model.User, error)
 }

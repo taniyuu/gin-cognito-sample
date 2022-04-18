@@ -27,7 +27,7 @@ type cognitoIdpClient struct {
 }
 
 // NewCognitoProxy AuthenticatorProxyを生成します
-func NewCognitoProxy(poolID, clientID, clientSecret string) proxy.AuthenticatorProxy {
+func NewCognitoProxy(poolID, clientID, clientSecret string) proxy.UserProxy {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
@@ -295,6 +295,23 @@ func (cic *cognitoIdpClient) RespondToInvitation(ctx context.Context, req *model
 		AccessToken:  *rtaco.AuthenticationResult.AccessToken,
 		RefreshToken: rtaco.AuthenticationResult.RefreshToken,
 	}, nil
+}
+
+// GetUser subで検索
+func (cic *cognitoIdpClient) GetUser(ctx context.Context, req *model.GetUserReq) (*model.User, error) {
+	lui := &cognitoidentityprovider.ListUsersInput{
+		UserPoolId: cic.poolID,
+		Filter:     aws.String(fmt.Sprintf(`sub = "%s"`, req.Sub)),
+	}
+	luo, err := cic.idp.ListUsersWithContext(ctx, lui)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	log.Default().Println(luo)
+	if len(luo.Users) == 0 {
+		return nil, errors.WithStack(fmt.Errorf("user not found"))
+	}
+	return cic.convertToUserModel(luo.Users[0].Attributes), nil
 }
 
 func (cic *cognitoIdpClient) calcSecretHash(username string) string {

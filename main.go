@@ -53,6 +53,7 @@ func main() {
 		authz.PUT("/profile", uh.ChangeProfile)
 		authz.POST("/change-password", uh.ChangePassword)
 		authz.POST("/invite", uh.Invite)
+		authz.GET("/users/:id", uh.GetUser)
 	}
 	engine.Run(":3000")
 }
