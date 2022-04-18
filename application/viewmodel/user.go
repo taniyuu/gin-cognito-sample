@@ -42,8 +42,20 @@ type SignoutReq struct {
 	model.SignoutReq
 }
 
+type InviteReq struct {
+	model.InviteReq
+}
+
+type RespondToInvitationReq struct {
+	model.RespondToInvitationReq
+}
+
 type SigninResp struct {
 	model.Token
+}
+
+type InviteResp struct {
+	Sub string `json:"sub"`
 }
 
 type User struct {

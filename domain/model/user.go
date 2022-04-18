@@ -56,6 +56,17 @@ type SignoutReq struct {
 	RefreshToken string `json:"refresh_token" validate:"required"`
 }
 
+type InviteReq struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+type RespondToInvitationReq struct {
+	Email            string `json:"email" validate:"required,email"`
+	Name             string `json:"name" validate:"required"`
+	Password         string `json:"password" validate:"required"`
+	ConfirmationCode string `json:"confirmation_code" validate:"required"`
+}
+
 type Token struct {
 	IDToken      string  `json:"id_token"`
 	AccessToken  string  `json:"access_token"`

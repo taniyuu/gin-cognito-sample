@@ -40,6 +40,7 @@ func main() {
 	engine.POST("/forgot-password", uh.ForgotPassword)
 	engine.POST("/confirm-forgot-password", uh.ConfirmForgotPassword)
 	engine.POST("/signout", uh.Signout)
+	engine.POST("/respond-to-invitation", uh.RespondToInvitation)
 	// 認可エンドポイント
 	authz := engine.Group("/", am.Authorization())
 	{
@@ -51,6 +52,7 @@ func main() {
 		authz.POST("/get-profile", uh.GetProfile) // アクセストークンを取得するためにPOSTで送信
 		authz.PUT("/profile", uh.ChangeProfile)
 		authz.POST("/change-password", uh.ChangePassword)
+		authz.POST("/invite", uh.Invite)
 	}
 	engine.Run(":3000")
 }

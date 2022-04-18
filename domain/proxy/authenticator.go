@@ -17,4 +17,6 @@ type AuthenticatorProxy interface {
 	ConfirmForgotPassword(ctx context.Context, req *model.ConfirmForgotPasswordReq) error
 	GetProfile(ctx context.Context, req *model.GetProfileReq) (*model.User, error)
 	Signout(ctx context.Context, req *model.SignoutReq) error
+	Invite(ctx context.Context, req *model.InviteReq) (sub string, err error)
+	RespondToInvitation(ctx context.Context, req *model.RespondToInvitationReq) (*model.Token, error)
 }

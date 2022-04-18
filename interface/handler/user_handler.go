@@ -153,11 +153,6 @@ func (h *UserHandler) ConfirmForgotPassword(c *gin.Context) {
 }
 
 func (h *UserHandler) GetProfile(c *gin.Context) {
-	// sub, err := middleware.GetSub(c)
-	// if err != nil {
-	// 	h.errorResponse(c, err)
-	// 	return
-	// }
 	req := new(viewmodel.GetProfileReq)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.errorResponse(c, err)
@@ -210,6 +205,44 @@ func (h *UserHandler) Signout(c *gin.Context) {
 		h.errorResponse(c, err)
 	} else {
 		c.Status(200)
+	}
+}
+
+func (h *UserHandler) Invite(c *gin.Context) {
+	req := new(viewmodel.InviteReq)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+	if err := h.v.Struct(req); err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+
+	resp, err := h.tu.Invite(c.Request.Context(), req)
+	if err != nil {
+		h.errorResponse(c, err)
+	} else {
+		c.JSON(200, resp)
+	}
+}
+
+func (h *UserHandler) RespondToInvitation(c *gin.Context) {
+	req := new(viewmodel.RespondToInvitationReq)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+	if err := h.v.Struct(req); err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+
+	resp, err := h.tu.RespondToInvitation(c.Request.Context(), req)
+	if err != nil {
+		h.errorResponse(c, err)
+	} else {
+		c.JSON(200, resp)
 	}
 }
 

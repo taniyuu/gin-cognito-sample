@@ -18,6 +18,8 @@ type UserUsecase interface {
 	ConfirmForgotPassword(ctx context.Context, req *viewmodel.ConfirmForgotPasswordReq) error
 	GetProfile(ctx context.Context, req *viewmodel.GetProfileReq) (*viewmodel.User, error)
 	Signout(ctx context.Context, req *viewmodel.SignoutReq) error
+	Invite(ctx context.Context, req *viewmodel.InviteReq) (*viewmodel.InviteResp, error)
+	RespondToInvitation(ctx context.Context, req *viewmodel.RespondToInvitationReq) (*viewmodel.SigninResp, error)
 }
 
 // アカウントに対する操作を提供します
@@ -101,4 +103,24 @@ func (tu *userUsecase) GetProfile(ctx context.Context, req *viewmodel.GetProfile
 // Signout ログアウトを行います
 func (tu *userUsecase) Signout(ctx context.Context, req *viewmodel.SignoutReq) error {
 	return tu.ap.Signout(ctx, &req.SignoutReq)
+}
+
+// Invite 招待を行います
+func (tu *userUsecase) Invite(ctx context.Context, req *viewmodel.InviteReq) (*viewmodel.InviteResp, error) {
+	sub, err := tu.ap.Invite(ctx, &req.InviteReq)
+	if err != nil {
+		return nil, err
+	}
+	return &viewmodel.InviteResp{Sub: sub}, nil
+}
+
+// RespondToInvitation 招待応答を行います
+func (tu *userUsecase) RespondToInvitation(ctx context.Context, req *viewmodel.RespondToInvitationReq) (*viewmodel.SigninResp, error) {
+	token, err := tu.ap.RespondToInvitation(ctx, &req.RespondToInvitationReq)
+	if err != nil {
+		return nil, err
+	}
+	resp := new(viewmodel.SigninResp)
+	resp.Token = *token
+	return resp, nil
 }

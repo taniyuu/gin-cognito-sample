@@ -111,21 +111,10 @@ func (cic *cognitoIdpClient) ConfirmAndSignin(ctx context.Context, req *model.Co
 
 // Signin ログイン
 func (cic *cognitoIdpClient) Signin(ctx context.Context, req *model.SigninReq) (*model.Token, error) {
-	aiai := &cognitoidentityprovider.AdminInitiateAuthInput{
-		UserPoolId: cic.poolID,
-		ClientId:   cic.clientID,
-		AuthFlow:   aws.String(cognitoidentityprovider.AuthFlowTypeAdminUserPasswordAuth),
-		AuthParameters: map[string]*string{
-			"USERNAME":    aws.String(req.Email),
-			"PASSWORD":    aws.String(req.Password),
-			"SECRET_HASH": aws.String(cic.calcSecretHash(req.Email)),
-		},
-	}
-	aiao, err := cic.idp.AdminInitiateAuthWithContext(ctx, aiai)
+	aiao, err := cic.initiateAuthWithContext(ctx, req)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
-	log.Default().Println(aiao)
 	// MFAなどの場合nilの可能性もあるので注意
 	return &model.Token{
 		IDToken:      *aiao.AuthenticationResult.IdToken,
@@ -135,16 +124,15 @@ func (cic *cognitoIdpClient) Signin(ctx context.Context, req *model.SigninReq) (
 
 // Refresh トークンリフレッシュ
 func (cic *cognitoIdpClient) Refresh(ctx context.Context, req *model.RefreshReq) (*model.Token, error) {
-	aiai := &cognitoidentityprovider.AdminInitiateAuthInput{
-		UserPoolId: cic.poolID,
-		ClientId:   cic.clientID,
-		AuthFlow:   aws.String(cognitoidentityprovider.AuthFlowTypeRefreshTokenAuth),
+	iai := &cognitoidentityprovider.InitiateAuthInput{
+		ClientId: cic.clientID,
+		AuthFlow: aws.String(cognitoidentityprovider.AuthFlowTypeRefreshTokenAuth),
 		AuthParameters: map[string]*string{
 			"REFRESH_TOKEN": aws.String(req.RefreshToken),
 			"SECRET_HASH":   aws.String(cic.calcSecretHash(req.Sub)),
 		},
 	}
-	aiao, err := cic.idp.AdminInitiateAuthWithContext(ctx, aiai)
+	aiao, err := cic.idp.InitiateAuthWithContext(ctx, iai)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -244,10 +232,93 @@ func (cic *cognitoIdpClient) Signout(ctx context.Context, req *model.SignoutReq)
 	return nil
 }
 
+// Invite 招待
+func (cic *cognitoIdpClient) Invite(ctx context.Context, req *model.InviteReq) (string, error) {
+	// 招待は２重送信を拒否する（アカウントの存在を確認してから送信する）
+	acui := &cognitoidentityprovider.AdminCreateUserInput{
+		UserPoolId: cic.poolID,
+		Username:   aws.String(req.Email),
+	}
+	rto, err := cic.idp.AdminCreateUserWithContext(ctx, acui)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	log.Default().Println(rto)
+	var sub string
+	for _, attr := range rto.User.Attributes {
+		if *attr.Name == "sub" {
+			sub = *attr.Value
+		}
+	}
+	return sub, nil
+}
+
+// RespondToInvitation 招待応答
+func (cic *cognitoIdpClient) RespondToInvitation(ctx context.Context, req *model.RespondToInvitationReq) (*model.Token, error) {
+	// 属性変更
+	auuai := &cognitoidentityprovider.AdminUpdateUserAttributesInput{
+		UserPoolId: cic.poolID,
+		Username:   aws.String(req.Email),
+		UserAttributes: []*cognitoidentityprovider.AttributeType{
+			{Name: aws.String("name"), Value: aws.String(req.Name)},
+			{Name: aws.String("email_verified"), Value: aws.String("true")}, // eメール確認済にする
+		},
+	}
+	auuao, err := cic.idp.AdminUpdateUserAttributesWithContext(ctx, auuai)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	log.Default().Println(auuao)
+	// ログイン
+	aiao, err := cic.initiateAuthWithContext(ctx, &model.SigninReq{Email: req.Email, Password: req.ConfirmationCode})
+	if err != nil {
+		return nil, err
+	}
+	// パスワード変更
+	rtaci := &cognitoidentityprovider.RespondToAuthChallengeInput{
+		ClientId:      cic.clientID,
+		ChallengeName: aiao.ChallengeName,
+		Session:       aiao.Session,
+		ChallengeResponses: map[string]*string{
+			"USERNAME":     aws.String(req.Email),
+			"NEW_PASSWORD": aws.String(req.Password),
+			"SECRET_HASH":  aws.String(cic.calcSecretHash(req.Email)),
+		},
+	}
+	rtaco, err := cic.idp.RespondToAuthChallengeWithContext(ctx, rtaci)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	log.Default().Println(rtaco)
+	return &model.Token{
+		IDToken:      *rtaco.AuthenticationResult.IdToken,
+		AccessToken:  *rtaco.AuthenticationResult.AccessToken,
+		RefreshToken: rtaco.AuthenticationResult.RefreshToken,
+	}, nil
+}
+
 func (cic *cognitoIdpClient) calcSecretHash(username string) string {
 	mac := hmac.New(sha256.New, []byte(*cic.clientSecret))
 	mac.Write([]byte(username + *cic.clientID))
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
+}
+
+func (cic *cognitoIdpClient) initiateAuthWithContext(ctx context.Context, req *model.SigninReq) (*cognitoidentityprovider.InitiateAuthOutput, error) {
+	iai := &cognitoidentityprovider.InitiateAuthInput{
+		ClientId: cic.clientID,
+		AuthFlow: aws.String(cognitoidentityprovider.AuthFlowTypeUserPasswordAuth),
+		AuthParameters: map[string]*string{
+			"USERNAME":    aws.String(req.Email),
+			"PASSWORD":    aws.String(req.Password),
+			"SECRET_HASH": aws.String(cic.calcSecretHash(req.Email)),
+		},
+	}
+	aiao, err := cic.idp.InitiateAuthWithContext(ctx, iai)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	log.Default().Println(aiao)
+	return aiao, nil
 }
 
 func (cic *cognitoIdpClient) convertToUserModel(attrs []*cognitoidentityprovider.AttributeType) *model.User {
