@@ -49,7 +49,7 @@ func main() {
 				"message": "hello world",
 			})
 		})
-		authz.POST("/get-profile", uh.GetProfile) // アクセストークンを取得するためにPOSTで送信
+		authz.GET("/profile", uh.GetProfile)
 		authz.PUT("/profile", uh.ChangeProfile)
 		authz.POST("/change-password", uh.ChangePassword)
 		authz.POST("/invite", uh.Invite)

@@ -28,8 +28,7 @@ type RefreshReq struct {
 }
 
 type ChangePasswordReq struct {
-	AccessToken      string `json:"access_token" validate:"required"`
-	PreviousPassword string `json:"previous_password" validate:"required"`
+	// PreviousPassword string `json:"previous_password" validate:"required"`
 	ProposedPassword string `json:"proposed_password" validate:"required"`
 }
 
@@ -43,13 +42,8 @@ type ConfirmForgotPasswordReq struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type GetProfileReq struct {
-	AccessToken string `json:"access_token" validate:"required"`
-}
-
 type ChangeProfileReq struct {
-	AccessToken string `json:"access_token" validate:"required"`
-	Name        string `json:"name" validate:"required"`
+	Name string `json:"name" validate:"required"`
 }
 
 type SignoutReq struct {
@@ -73,6 +67,5 @@ type GetUserReq struct {
 
 type Token struct {
 	IDToken      string  `json:"id_token"`
-	AccessToken  string  `json:"access_token"`
 	RefreshToken *string `json:"refresh_token,omitempty"`
 }

@@ -13,10 +13,11 @@ type UserUsecase interface {
 	Confirm(ctx context.Context, req *viewmodel.ConfirmReq) (*viewmodel.SigninResp, error)
 	Signin(ctx context.Context, req *viewmodel.SigninReq) (*viewmodel.SigninResp, error)
 	Refresh(ctx context.Context, req *viewmodel.RefreshReq) (*viewmodel.SigninResp, error)
-	ChangePassword(ctx context.Context, req *viewmodel.ChangePasswordReq) error
+	ChangePassword(ctx context.Context, email string, req *viewmodel.ChangePasswordReq) error
 	ForgotPassword(ctx context.Context, req *viewmodel.ForgotPasswordReq) error
 	ConfirmForgotPassword(ctx context.Context, req *viewmodel.ConfirmForgotPasswordReq) error
-	GetProfile(ctx context.Context, req *viewmodel.GetProfileReq) (*viewmodel.User, error)
+	GetProfile(ctx context.Context, email string) (*viewmodel.User, error)
+	ChangeProfile(ctx context.Context, email string, req *viewmodel.ChangeProfileReq) error
 	Signout(ctx context.Context, req *viewmodel.SignoutReq) error
 	Invite(ctx context.Context, req *viewmodel.InviteReq) (*viewmodel.InviteResp, error)
 	RespondToInvitation(ctx context.Context, req *viewmodel.RespondToInvitationReq) (*viewmodel.SigninResp, error)
@@ -76,8 +77,8 @@ func (tu *userUsecase) Refresh(ctx context.Context, req *viewmodel.RefreshReq) (
 }
 
 // ChangePassword パスワード変更を行います
-func (tu *userUsecase) ChangePassword(ctx context.Context, req *viewmodel.ChangePasswordReq) error {
-	return tu.ap.ChangePassword(ctx, &req.ChangePasswordReq)
+func (tu *userUsecase) ChangePassword(ctx context.Context, email string, req *viewmodel.ChangePasswordReq) error {
+	return tu.ap.ChangePassword(ctx, email, &req.ChangePasswordReq)
 }
 
 // ForgotPassword パスワード忘れ
@@ -91,14 +92,19 @@ func (tu *userUsecase) ConfirmForgotPassword(ctx context.Context, req *viewmodel
 }
 
 // GetProfile アカウント情報を取得します
-func (tu *userUsecase) GetProfile(ctx context.Context, req *viewmodel.GetProfileReq) (*viewmodel.User, error) {
-	user, err := tu.ap.GetProfile(ctx, &req.GetProfileReq)
+func (tu *userUsecase) GetProfile(ctx context.Context, email string) (*viewmodel.User, error) {
+	user, err := tu.ap.GetProfile(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 	resp := new(viewmodel.User)
 	resp.User = *user
 	return resp, nil
+}
+
+// ChangeProfile アカウント情報を変更します
+func (tu *userUsecase) ChangeProfile(ctx context.Context, email string, req *viewmodel.ChangeProfileReq) error {
+	return tu.ap.ChangeProfile(ctx, email, &req.ChangeProfileReq)
 }
 
 // Signout ログアウトを行います

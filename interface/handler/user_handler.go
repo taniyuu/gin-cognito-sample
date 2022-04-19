@@ -106,7 +106,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	err := h.tu.ChangePassword(c.Request.Context(), req)
+	err := h.tu.ChangePassword(c.Request.Context(), "cmt.0801nonki@gmail.com", req)
 	if err != nil {
 		h.errorResponse(c, err)
 	} else {
@@ -153,16 +153,7 @@ func (h *UserHandler) ConfirmForgotPassword(c *gin.Context) {
 }
 
 func (h *UserHandler) GetProfile(c *gin.Context) {
-	req := new(viewmodel.GetProfileReq)
-	if err := c.ShouldBindJSON(req); err != nil {
-		h.errorResponse(c, err)
-		return
-	}
-	if err := h.v.Struct(req); err != nil {
-		h.errorResponse(c, err)
-		return
-	}
-	resp, err := h.tu.GetProfile(c.Request.Context(), req)
+	resp, err := h.tu.GetProfile(c.Request.Context(), "cmt.0801nonki@gmail.com")
 	if err != nil {
 		h.errorResponse(c, err)
 	} else {
@@ -171,7 +162,7 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 }
 
 func (h *UserHandler) ChangeProfile(c *gin.Context) {
-	req := new(viewmodel.ChangePasswordReq)
+	req := new(viewmodel.ChangeProfileReq)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.errorResponse(c, err)
 		return
@@ -181,7 +172,7 @@ func (h *UserHandler) ChangeProfile(c *gin.Context) {
 		return
 	}
 
-	err := h.tu.ChangePassword(c.Request.Context(), req)
+	err := h.tu.ChangeProfile(c.Request.Context(), "cmt.0801nonki@gmail.com", req)
 	if err != nil {
 		h.errorResponse(c, err)
 	} else {

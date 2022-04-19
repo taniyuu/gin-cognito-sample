@@ -118,7 +118,6 @@ func (cic *cognitoIdpClient) Signin(ctx context.Context, req *model.SigninReq) (
 	// MFAなどの場合nilの可能性もあるので注意
 	return &model.Token{
 		IDToken:      *aiao.AuthenticationResult.IdToken,
-		AccessToken:  *aiao.AuthenticationResult.AccessToken,
 		RefreshToken: aiao.AuthenticationResult.RefreshToken}, nil
 }
 
@@ -132,26 +131,23 @@ func (cic *cognitoIdpClient) Refresh(ctx context.Context, req *model.RefreshReq)
 			"SECRET_HASH":   aws.String(cic.calcSecretHash(req.Sub)),
 		},
 	}
-	aiao, err := cic.idp.InitiateAuthWithContext(ctx, iai)
+	iao, err := cic.idp.InitiateAuthWithContext(ctx, iai)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	log.Default().Println(aiao)
-	// MFAなどの場合nilの可能性もあるので注意
-	return &model.Token{
-		IDToken:      *aiao.AuthenticationResult.IdToken,
-		AccessToken:  *aiao.AuthenticationResult.AccessToken,
-		RefreshToken: aiao.AuthenticationResult.RefreshToken}, nil
+	log.Default().Println(iao)
+	return &model.Token{IDToken: *iao.AuthenticationResult.IdToken}, nil
 }
 
 // ChangePassword パスワード変更
-func (cic *cognitoIdpClient) ChangePassword(ctx context.Context, req *model.ChangePasswordReq) error {
-	cpi := &cognitoidentityprovider.ChangePasswordInput{
-		AccessToken:      aws.String(req.AccessToken),
-		PreviousPassword: aws.String(req.PreviousPassword),
-		ProposedPassword: aws.String(req.ProposedPassword),
+func (cic *cognitoIdpClient) ChangePassword(ctx context.Context, email string, req *model.ChangePasswordReq) error {
+	asupi := &cognitoidentityprovider.AdminSetUserPasswordInput{
+		UserPoolId: cic.poolID,
+		Password:   aws.String(req.ProposedPassword),
+		Permanent:  aws.Bool(true),
+		Username:   aws.String(email),
 	}
-	_, err := cic.idp.ChangePasswordWithContext(ctx, cpi)
+	_, err := cic.idp.AdminSetUserPasswordWithContext(ctx, asupi)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -189,27 +185,29 @@ func (cic *cognitoIdpClient) ConfirmForgotPassword(ctx context.Context, req *mod
 }
 
 // GetProfile 属性取得
-func (cic *cognitoIdpClient) GetProfile(ctx context.Context, req *model.GetProfileReq) (*model.User, error) {
-	gui := &cognitoidentityprovider.GetUserInput{
-		AccessToken: &req.AccessToken,
+func (cic *cognitoIdpClient) GetProfile(ctx context.Context, email string) (*model.User, error) {
+	agui := &cognitoidentityprovider.AdminGetUserInput{
+		UserPoolId: cic.poolID,
+		Username:   aws.String(email),
 	}
-	guo, err := cic.idp.GetUserWithContext(ctx, gui)
+	aguo, err := cic.idp.AdminGetUserWithContext(ctx, agui)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	log.Default().Println(guo)
-	return cic.convertToUserModel(guo.UserAttributes), nil
+	log.Default().Println(aguo)
+	return cic.convertToUserModel(aguo.UserAttributes), nil
 }
 
 // ChangeProfile 属性変更
-func (cic *cognitoIdpClient) ChangeProfile(ctx context.Context, req *model.ChangeProfileReq) error {
-	uuai := &cognitoidentityprovider.UpdateUserAttributesInput{
-		AccessToken: aws.String(req.AccessToken),
+func (cic *cognitoIdpClient) ChangeProfile(ctx context.Context, email string, req *model.ChangeProfileReq) error {
+	auuai := &cognitoidentityprovider.AdminUpdateUserAttributesInput{
+		UserPoolId: cic.poolID,
+		Username:   aws.String(email),
 		UserAttributes: []*cognitoidentityprovider.AttributeType{
 			{Name: aws.String("name"), Value: aws.String(req.Name)},
 		},
 	}
-	uuao, err := cic.idp.UpdateUserAttributesWithContext(ctx, uuai)
+	uuao, err := cic.idp.AdminUpdateUserAttributesWithContext(ctx, auuai)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -292,7 +290,6 @@ func (cic *cognitoIdpClient) RespondToInvitation(ctx context.Context, req *model
 	log.Default().Println(rtaco)
 	return &model.Token{
 		IDToken:      *rtaco.AuthenticationResult.IdToken,
-		AccessToken:  *rtaco.AuthenticationResult.AccessToken,
 		RefreshToken: rtaco.AuthenticationResult.RefreshToken,
 	}, nil
 }
