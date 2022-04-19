@@ -10,6 +10,7 @@ import (
 )
 
 const subContextKey string = "sub"
+const emailContextKey string = "email"
 
 // AuthzMiddleware アカウント認証操作を実行します
 type AuthzMiddleware struct {
@@ -25,14 +26,15 @@ func NewAuthzMiddleware(ap proxy.AuthorizarProxy) *AuthzMiddleware {
 func (am *AuthzMiddleware) Authorization() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("Authorization")
-		sub, err := am.ap.ValidateJWT(token)
+		sub, email, err := am.ap.ValidateJWT(token)
 		if err != nil {
 			am.errorResponse(c, err)
 			c.Abort()
 			return
 		}
-		// ginコンテキストにsubを入れる
+		// ginコンテキストにsub, emailを入れる
 		c.Set(subContextKey, sub)
+		c.Set(emailContextKey, email)
 		c.Next()
 	}
 }
@@ -41,6 +43,14 @@ func GetSub(c *gin.Context) (string, error) {
 	v := c.GetString(subContextKey)
 	if v == "" {
 		return v, errors.WithStack(fmt.Errorf("token not found"))
+	}
+	return v, nil
+}
+
+func GetEmail(c *gin.Context) (string, error) {
+	v := c.GetString(emailContextKey)
+	if v == "" {
+		return v, errors.WithStack(fmt.Errorf("email not found"))
 	}
 	return v, nil
 }

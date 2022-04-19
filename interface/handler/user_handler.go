@@ -7,6 +7,7 @@ import (
 
 	"github.com/taniyuu/gin-cognito-sample/application/usecase"
 	"github.com/taniyuu/gin-cognito-sample/application/viewmodel"
+	"github.com/taniyuu/gin-cognito-sample/interface/middleware"
 	"gopkg.in/go-playground/validator.v9"
 )
 
@@ -96,6 +97,12 @@ func (h *UserHandler) Refresh(c *gin.Context) {
 }
 
 func (h *UserHandler) ChangePassword(c *gin.Context) {
+	// gin.Contextからメールアドレスを取得
+	email, err := middleware.GetEmail(c)
+	if err != nil {
+		h.errorResponse(c, err)
+		return
+	}
 	req := new(viewmodel.ChangePasswordReq)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.errorResponse(c, err)
@@ -106,7 +113,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	err := h.tu.ChangePassword(c.Request.Context(), req)
+	err = h.tu.ChangePassword(c.Request.Context(), email, req)
 	if err != nil {
 		h.errorResponse(c, err)
 	} else {
@@ -153,16 +160,13 @@ func (h *UserHandler) ConfirmForgotPassword(c *gin.Context) {
 }
 
 func (h *UserHandler) GetProfile(c *gin.Context) {
-	req := new(viewmodel.GetProfileReq)
-	if err := c.ShouldBindJSON(req); err != nil {
+	// gin.Contextからメールアドレスを取得
+	email, err := middleware.GetEmail(c)
+	if err != nil {
 		h.errorResponse(c, err)
 		return
 	}
-	if err := h.v.Struct(req); err != nil {
-		h.errorResponse(c, err)
-		return
-	}
-	resp, err := h.tu.GetProfile(c.Request.Context(), req)
+	resp, err := h.tu.GetProfile(c.Request.Context(), email)
 	if err != nil {
 		h.errorResponse(c, err)
 	} else {
@@ -171,7 +175,13 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 }
 
 func (h *UserHandler) ChangeProfile(c *gin.Context) {
-	req := new(viewmodel.ChangePasswordReq)
+	// gin.Contextからメールアドレスを取得
+	email, err := middleware.GetEmail(c)
+	if err != nil {
+		h.errorResponse(c, err)
+		return
+	}
+	req := new(viewmodel.ChangeProfileReq)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.errorResponse(c, err)
 		return
@@ -181,7 +191,7 @@ func (h *UserHandler) ChangeProfile(c *gin.Context) {
 		return
 	}
 
-	err := h.tu.ChangePassword(c.Request.Context(), req)
+	err = h.tu.ChangeProfile(c.Request.Context(), email, req)
 	if err != nil {
 		h.errorResponse(c, err)
 	} else {

@@ -30,10 +30,6 @@ type ConfirmForgotPasswordReq struct {
 	model.ConfirmForgotPasswordReq
 }
 
-type GetProfileReq struct {
-	model.GetProfileReq
-}
-
 type ChangeProfileReq struct {
 	model.ChangeProfileReq
 }
