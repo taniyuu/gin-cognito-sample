@@ -365,9 +365,10 @@ func NewCognitoAuthorizar(region, poolID, clientID string) proxy.AuthorizarProxy
 	}
 }
 
-func (ca *cognitoAuthorizar) ValidateJWT(accessToken string) (string, error) {
+func (ca *cognitoAuthorizar) ValidateJWT(idToken string) (string, string, error) {
+	// IDトークンの検証を行う
 	jt, err := jwt.Parse(
-		[]byte(accessToken),
+		[]byte(idToken),
 		jwt.WithKeySet(ca.jwk),
 		jwt.WithValidate(true),
 		jwt.WithIssuer(fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", ca.region, ca.poolID)),
@@ -375,8 +376,9 @@ func (ca *cognitoAuthorizar) ValidateJWT(accessToken string) (string, error) {
 		jwt.WithClaimValue("token_use", "id"),
 	)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", "", errors.WithStack(err)
 	}
 	log.Default().Printf("%+v", jt.PrivateClaims())
-	return jt.Subject(), nil
+	email, _ := jt.Get("email")
+	return jt.Subject(), fmt.Sprint(email), nil
 }
