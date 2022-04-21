@@ -46,10 +46,6 @@ type RespondToInvitationReq struct {
 	model.RespondToInvitationReq
 }
 
-type GetUserReq struct {
-	model.GetUserReq
-}
-
 type SigninResp struct {
 	model.Token
 }

@@ -61,10 +61,6 @@ type RespondToInvitationReq struct {
 	ConfirmationCode string `json:"confirmation_code" validate:"required"`
 }
 
-type GetUserReq struct {
-	Sub string `json:"sub" validate:"required"`
-}
-
 type Token struct {
 	IDToken      string  `json:"id_token"`
 	RefreshToken *string `json:"refresh_token,omitempty"`

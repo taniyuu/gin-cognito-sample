@@ -21,7 +21,7 @@ type UserUsecase interface {
 	Signout(ctx context.Context, req *viewmodel.SignoutReq) error
 	Invite(ctx context.Context, req *viewmodel.InviteReq) (*viewmodel.InviteResp, error)
 	RespondToInvitation(ctx context.Context, req *viewmodel.RespondToInvitationReq) (*viewmodel.SigninResp, error)
-	GetUserForAdmin(ctx context.Context, req *viewmodel.GetUserReq) (*viewmodel.User, error)
+	GetUserForAdmin(ctx context.Context, id string) (*viewmodel.User, error)
 }
 
 // アカウントに対する操作を提供します
@@ -133,8 +133,8 @@ func (tu *userUsecase) RespondToInvitation(ctx context.Context, req *viewmodel.R
 }
 
 // GetUserForAdmin ユーザ取得を行います
-func (tu *userUsecase) GetUserForAdmin(ctx context.Context, req *viewmodel.GetUserReq) (*viewmodel.User, error) {
-	user, err := tu.ap.GetUser(ctx, &req.GetUserReq)
+func (tu *userUsecase) GetUserForAdmin(ctx context.Context, id string) (*viewmodel.User, error) {
+	user, err := tu.ap.GetUser(ctx, id)
 	if err != nil {
 		return nil, err
 	}

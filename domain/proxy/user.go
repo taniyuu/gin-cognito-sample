@@ -20,5 +20,5 @@ type UserProxy interface {
 	Signout(ctx context.Context, req *model.SignoutReq) error
 	Invite(ctx context.Context, req *model.InviteReq) (sub string, err error)
 	RespondToInvitation(ctx context.Context, req *model.RespondToInvitationReq) (*model.Token, error)
-	GetUser(ctx context.Context, req *model.GetUserReq) (*model.User, error)
+	GetUser(ctx context.Context, id string) (*model.User, error)
 }

@@ -257,13 +257,8 @@ func (h *UserHandler) RespondToInvitation(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUser(c *gin.Context) {
-	req := new(viewmodel.GetUserReq)
-	req.Sub = c.Param("id")
-	if err := h.v.Struct(req); err != nil {
-		h.errorResponse(c, err)
-		return
-	}
-	resp, err := h.tu.GetUserForAdmin(c.Request.Context(), req)
+	id := c.Param("id")
+	resp, err := h.tu.GetUserForAdmin(c.Request.Context(), id)
 	if err != nil {
 		h.errorResponse(c, err)
 	} else {

@@ -295,10 +295,10 @@ func (cic *cognitoIdpClient) RespondToInvitation(ctx context.Context, req *model
 }
 
 // GetUser subで検索
-func (cic *cognitoIdpClient) GetUser(ctx context.Context, req *model.GetUserReq) (*model.User, error) {
+func (cic *cognitoIdpClient) GetUser(ctx context.Context, sub string) (*model.User, error) {
 	lui := &cognitoidentityprovider.ListUsersInput{
 		UserPoolId: cic.poolID,
-		Filter:     aws.String(fmt.Sprintf(`sub = "%s"`, req.Sub)),
+		Filter:     aws.String(fmt.Sprintf(`sub = "%s"`, sub)),
 	}
 	luo, err := cic.idp.ListUsersWithContext(ctx, lui)
 	if err != nil {
