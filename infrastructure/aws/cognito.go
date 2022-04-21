@@ -342,6 +342,9 @@ func (cic *cognitoIdpClient) initiateAuthWithContext(ctx context.Context, req *m
 func (cic *cognitoIdpClient) convertToUserModel(attrs []*cognitoidentityprovider.AttributeType) *model.User {
 	u := new(model.User)
 	for _, attr := range attrs {
+		if *attr.Name == "sub" {
+			u.Sub = *attr.Value
+		}
 		if *attr.Name == "email" {
 			u.Email = *attr.Value
 		}

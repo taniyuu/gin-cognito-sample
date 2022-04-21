@@ -1,8 +1,9 @@
 package model
 
 type User struct {
-	Email string
-	Name  string
+	Sub   string `json:"-"`
+	Email string `json:"email"`
+	Name  string `json:"name"`
 }
 
 type CreateReq struct {
