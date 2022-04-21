@@ -7,12 +7,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/taniyuu/gin-cognito-sample/domain/model"
 	"github.com/taniyuu/gin-cognito-sample/domain/proxy"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/lestrrat-go/jwx/v2/jwk"
@@ -87,8 +87,11 @@ func (cic *cognitoIdpClient) Signup(ctx context.Context, req *model.CreateReq) (
 func (cic *cognitoIdpClient) ConfirmAndSignin(ctx context.Context, req *model.ConfirmAndSigninReq) (*model.Token, error) {
 	// 確認した後ログイン失敗の事象を回避するために一度ログインを試行する
 	_, err := cic.Signin(ctx, &model.SigninReq{Email: req.Email, Password: req.Password})
-	if err != nil && strings.HasPrefix(errors.Unwrap(err).Error(), "NotAuthorizedException") {
-		return nil, errors.WithStack(err)
+	if err != nil {
+		awsErr, ok := errors.Cause(err).(awserr.Error)
+		if ok && awsErr.Code() == cognitoidentityprovider.ErrCodeNotAuthorizedException {
+			return nil, errors.WithStack(err)
+		}
 	}
 
 	csi := &cognitoidentityprovider.ConfirmSignUpInput{
@@ -329,6 +332,7 @@ func (cic *cognitoIdpClient) initiateAuthWithContext(ctx context.Context, req *m
 	}
 	aiao, err := cic.idp.InitiateAuthWithContext(ctx, iai)
 	if err != nil {
+		log.Default().Println(err)
 		return nil, errors.WithStack(err)
 	}
 	log.Default().Println(aiao)
